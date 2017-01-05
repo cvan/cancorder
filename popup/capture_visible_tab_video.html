@@ -1,0 +1,123 @@
+<!doctype html>
+<html data-state="ready">
+  <head>
+    <meta charset="utf-8">
+    <title>Capture Visible Tab Video</title>
+    <script async src="capture_visible_tab_video.js"></script>
+    <style>
+      h1 {
+        font-size: 1rem;
+        margin: 0;
+      }
+
+      .panel-section-header label {
+        display: block;
+        text-align: left;
+      }
+
+      label:first-child {
+        padding-right: 1rem;
+      }
+
+      label + label {
+        padding-left: 1rem;
+      }
+
+      .label {
+        color: #666;
+        display: block;
+        font-size: .8rem;
+        padding-bottom: .25rem;
+      }
+
+      input,
+      select {
+        display: block;
+        font-family: inherit;
+        font-size: 1rem;
+      }
+
+      .panel-formElements-item input[type="number"] {
+        flex-grow: 1;
+        padding: 0 4px;
+      }
+
+      /* FYI: Firefox's default panel styles live here: https://dxr.mozilla.org/mozilla-central/source/browser/components/extensions/extension.css */
+
+      button {
+        cursor: pointer;
+      }
+
+      button:active {
+        color: #fff;
+      }
+
+      .button-record,
+      .button-stop {
+        border-width: 0;
+        box-shadow: none;
+      }
+
+      .button-record {
+        background-color: #7ed321;
+      }
+
+      .button-stop {
+        background-color: #9d0114;
+      }
+
+      .button-record:active {
+        background-color: #64a71a;
+      }
+
+      .button-stop:active {
+        background-color: #d0011b;
+      }
+
+      html:not([data-state="recording"]) .button-stop {
+        display: none;
+      }
+
+      [data-state="recording"] .button-record {
+        display: none;
+      }
+
+      [data-state="recording"] .button-stop {
+        display: block;
+      }
+
+      .footer {
+        background-color: rgba(0, 0, 0, 0.06);
+        border-top: 1px solid rgba(0, 0, 0, 0.15);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <div class="panel-section panel-section-header">
+        <h1>Cancorder</h1>
+      </div>
+      <div class="panel-section-formElements">
+        <div class="panel-formElements-item">
+          <label>
+            <span class="label">Canvas source</span>
+            <select id="source">
+            </select>
+          </label>
+          <label>
+            <span class="label">Framerate (frames/sec)</span>
+            <input id="framerate" type="number" value="15" placeholder="15" step="5" min="5" max="1000">
+          </label>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <div class="panel-section-formElements">
+          <button id="record" class="panel-section-footer-button button-record default">Record</button>
+          <button id="stop" class="panel-section-footer-button button-stop default">Stop</button>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

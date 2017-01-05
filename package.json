@@ -1,0 +1,23 @@
+{
+  "name": "cancorder",
+  "description": "A browser extension to capture a video of a canvas.",
+  "version": "1.0.0",
+  "author": "Chris Van Wiemeersch <hearcomestreble@gmail.com>",
+  "keywords": [
+    "canvas",
+    "video",
+    "capture",
+    "record",
+    "firefox",
+    "chrome",
+    "extension"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cvan/cancorder.git"
+  },
+  "scripts": {
+    "deploy": "npm run fix && npm run clean && npm install && npm run test && npm version patch"
+  }
+}

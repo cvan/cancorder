@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "Cancorder",
+    "description": "Name of the extension."
+  },
+  "extensionDescription": {
+    "message": "Captures a video of a canvas.",
+    "description": "Description of the extension."
+  },
+  "notificationVideoDoneTitle": {
+    "message": "Video captured",
+    "description": "Title of the click notification."
+  }
+}

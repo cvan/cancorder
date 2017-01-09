@@ -15,20 +15,13 @@ var ICON_RED = {
   64: 'icons/camcorder-red-64.png'
 };
 
+var currentTab;
+
 /**
  * Updates the browserAction icon to reflect whether the current page
- * is already bookmarked.
+ * is ready to record or stop recording.
  */
-function updateIcon (isReady, isRecording, isFinished) {
-  var icon = ICON_DEFAULT;
-  if (isRecording) {
-    icon = ICON_RED;
-  } else if (isFinished) {
-    icon = ICON_GREEN;
-  } else if (isReady) {
-    icon = ICON_BLUE;
-  }
-
+function updateIcon (icon) {
   browser.browserAction.setIcon({
     path: icon,
     tabId: currentTab.id
@@ -41,7 +34,8 @@ function updateActiveTab (tabs) {
       return;
     }
     currentTab = tabs[0];
-    updateIcon();
+    console.log('this is the active tab', currentTab)
+    // updateIcon();
   }
 
   var gettingActiveTab = browser.tabs.query({
@@ -59,3 +53,17 @@ browser.tabs.onActivated.addListener(updateActiveTab);
 
 // Update when the extension loads initially.
 updateActiveTab();
+
+function notify (msg) {
+  console.log('background got msg', msg);
+  if (msg.source !== 'cancorder') {
+    return;
+  }
+  if (msg.recorderState === 'recording') {
+    updateIcon(ICON_RED);
+  } else {
+    updateIcon(ICON_GREEN);
+  }
+}
+
+browser.runtime.onMessage.addListener(notify);

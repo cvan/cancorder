@@ -1,6 +1,13 @@
 /* global browser, MediaRecorder */
 var CANCORDER_VIDEO_ID = 'cancorder-video';
 var GAMEPAD_CONTROLS_ENABLED = false;
+var MEDIARECORDER_CONTENT_TYPES = [
+  'video/webm',
+  'video/webm;codecs=vp8',
+  'audio/webm',
+  'video/mp4;codecs=h264',
+  'video/invalid'
+];
 var NUMERIC_KEY_CHAR_CODES = {
   161: 1,
   8482: 2,
@@ -15,10 +22,11 @@ var NUMERIC_KEY_CHAR_CODES = {
 
 var filenamesGenerated = {};
 var framerate;
-var isFinished = true;
+var isFinished = null;
 var isRecording = false;
 var recorder = null;
 var recordingCanvasNumber = -1;
+var videos = [];
 
 function getCanvasByNumber (num, selector) {
   var canvases = document.querySelectorAll(selector || 'canvas');
@@ -117,25 +125,17 @@ function generateFilename (customFilename) {
   return filename + '.mp4';
 }
 
-var startCapturing = function () {
-  if (!recorder) {
-    record();
-  }
-  recorder.start();
-  isRecording = true;
-  isFinished = false;
-  notify();
-};
-
-var stopCapturing = function () {
-  if (!recorder) {
-    return;
-  }
-  recorder.stop();
-  notify();
-};
-
 var record = function (canvas, num) {
+  if (typeof window.MediaRecorder === 'undefined') {
+    console.error('[cancorder] Browser support for MediaRecorder is required');
+  } else {
+    MEDIARECORDER_CONTENT_TYPES.forEach(contentType => {
+      console.info('%s is %ssupported',
+        contentType,
+        (!MediaRecorder.isTypeSupported(contentType) ? 'NOT ' : ''));
+    });
+  }
+
   recordingCanvasNumber = parseInt(num, 10);
   framerate = parseInt(framerate, 10) || 15;
 
@@ -144,7 +144,7 @@ var record = function (canvas, num) {
 
   console.log('Ready to record %s #%s', getSelector(canvas), num);
 
-  var video = document.body.querySelector('#' + CANCORDER_VIDEO_ID);
+  var video = document.getElementById(CANCORDER_VIDEO_ID);
 
   if (video) {
     video.pause();
@@ -181,53 +181,67 @@ var record = function (canvas, num) {
   var stream = canvas.captureStream(framerate);
   recorder = new MediaRecorder(stream);
 
-  var finishCapturing = function (e) {
+  recorder.addEventListener('start', function () {
+    isRecording = true;
+    isFinished = false;
+    notify();
+  });
+  recorder.addEventListener('dataavailable', function (e) {
     isRecording = false;
     isFinished = true;
     var videoData = [e.data];
+    var filename = generateFilename();
     var blob = new Blob(videoData, {type: 'video/webm'});
     console.log('Video (%s bytes, %s media) ready to save:',
-      blob.size, blob.type, generateFilename());
+      blob.size, blob.type, filename);
     var videoURL = URL.createObjectURL(blob);
     video.src = videoURL;
     video.play();
-  };
+    videos.push({
+      url: videoURL,
+      filename: filename
+    });
+    notify();
+  });
 
-  recorder.addEventListener('dataavailable', finishCapturing);
-  startCapturing();
+  recorder.start();
 };
 
 var stop = function () {
-  stopCapturing();
+  if (!recorder) {
+    return;
+  }
+  recorder.stop();
 };
+
+function getState () {
+  return {
+    source: 'cancorder',
+    recorderState: recorder ? recorder.state : null,
+    isFinished: isFinished,
+    sources: getCanvasNames()
+  };
+}
 
 /**
  * Send a message to the page script.
  */
-function msgPageScript (data) {
-  window.postMessage({
-    source: 'cancorder',
-    isRecording: isRecording,
-    isFinished: isFinished,
-    sources: getCanvasNames()
-  }, '*');
+function msgPageScript () {
+  window.postMessage(getState(), '*');
 }
 
 /**
  * Send a message to the extension's pop-up doorhanger in the toolbar.
  */
-function msgToolbarPopup (data) {
-  browser.runtime.sendMessage({
-    source: 'cancorder',
-    isRecording: isRecording,
-    isFinished: isFinished,
-    sources: getCanvasNames()
-  });
+function msgToolbarPopup () {
+  var msg = getState();
+  console.log('msgToolbarPopup', msg);
+  browser.runtime.sendMessage(msg);
 }
 
-function notify (data) {
-  msgPageScript(data);
-  msgToolbarPopup(data);
+function notify () {
+  msgPageScript();
+  msgToolbarPopup();
 }
 
 function handleMessage (msg, sender, sendResponse) {
@@ -258,8 +272,8 @@ browser.runtime.onMessage.addListener(handleMessage);
  * Listens for messages from the page.
  * If the message was from the page script, start recording.
  */
-window.addEventListener('message', function () {
-  if (e.source !== window || e.data.source !== 'cancorder') {
+window.addEventListener('message', function (e) {
+  if (!e || e.source !== window || e.data.source !== 'cancorder') {
     return;
   }
   handleMessage(e.data);

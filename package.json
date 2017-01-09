@@ -5,6 +5,7 @@
   "author": "Chris Van Wiemeersch <hearcomestreble@gmail.com>",
   "keywords": [
     "canvas",
+    "webgl",
     "video",
     "capture",
     "record",
@@ -17,7 +18,14 @@
     "type": "git",
     "url": "https://github.com/cvan/cancorder.git"
   },
+  "devDependencies": {
+    "web-ext": "^1.7.0"
+  },
   "scripts": {
-    "deploy": "npm run fix && npm run clean && npm install && npm run test && npm version patch"
+    "start": "npm run dev",
+    "dev": "web-ext run",
+    "lint": "web-ext lint",
+    "test": "npm run lint",
+    "deploy": "npm run fix && npm run clean && npm install && npm test && npm version patch"
   }
 }

@@ -14,11 +14,15 @@ var recordButton = document.querySelector('#record');
 var sources = [];
 var stopButton = document.querySelector('#stop');
 
-var canvasNumber = canvasSourceField.value;
-var framerate = framerateField.value;
+var state = {
+  source: 'cancorder',
+  canvasNumber: canvasSourceField.value || 0,
+  framerate: framerateField.value || 15
+};
 
-function getActiveTab () {
-  return browser.tabs.query({active: true, currentWindow: true});
+function getState (data) {
+  Object.assign(state, data);
+  return state;
 }
 
 function setIcon (icon) {
@@ -37,7 +41,7 @@ function notify (msg) {
   if (msg.source !== 'cancorder') {
     return;
   }
-  console.log('popup received msg', msg);
+  console.log('[cancorder][popup] received msg', msg);
   if (msg.sources) {
     canvasSourceField.options.length = 0;
     document.querySelector('#logs').innerHTML += JSON.stringify(msg) + '<br>\n';
@@ -48,13 +52,8 @@ function notify (msg) {
   if (msg.recorderState) {
     setIcon();
   }
-  if (msg.recorderState === 'recording') {
-    isRecording = true;
-    setIcon(ICON_RED);
-  } else if (msg.recorderState) {
-    setIcon(ICON_GREEN);
-    document.documentElement.dataset.state = msg.recorderState;
-  }
+  isRecording = msg.recorderState;
+  document.documentElement.dataset.state = msg.recorderState;
 }
 
 /**
@@ -62,14 +61,14 @@ function notify (msg) {
  */
 browser.runtime.onMessage.addListener(notify);
 
+function getActiveTab () {
+  return browser.tabs.query({active: true, currentWindow: true});
+}
+
 function msgTab (data) {
   return getActiveTab().then(tabs => {
     activeTab = tabs[0];
-    return browser.tabs.sendMessage(tabs[0].id, Object.assign({
-      source: 'cancorder',
-      canvasNumber: document.querySelector('#source').value,
-      framerate: document.querySelector('#framerate').value
-    }, data));
+    return browser.tabs.sendMessage(tabs[0].id, getState(data));
   });
 }
 
@@ -91,15 +90,30 @@ function stop () {
 }
 
 msgTab({
-  state: 'ready'
+  request: 'setup'
 });
+console.log('setup');
 
 recordButton.addEventListener('click', record);
 stopButton.addEventListener('click', stop);
 
 browser.browserAction.onClicked.addListener(function () {
-  console.log('clicked', isRecording);
+  console.log('[cancorder][popup] clicked', isRecording);
   if (isRecording) {
     stop();
   }
+});
+
+var form = document.querySelector('form');
+
+form.addEventListener('change', function (e) {
+  console.log('[cancorder][popup] form changed', e);
+  state.canvasNumber = document.querySelector('#source').value;
+  state.framerate = document.querySelector('#framerate').valu;
+});
+
+form.addEventListener('submit', function (e) {
+  console.log('[cancorder][popup] submitted', e);
+  state.canvasNumber = document.querySelector('#source').value;
+  state.framerate = document.querySelector('#framerate').valu;
 });

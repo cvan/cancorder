@@ -34,8 +34,7 @@ function updateActiveTab (tabs) {
       return;
     }
     currentTab = tabs[0];
-    console.log('this is the active tab', currentTab)
-    // updateIcon();
+    console.log('active tab', currentTab);
   }
 
   var gettingActiveTab = browser.tabs.query({
@@ -55,13 +54,19 @@ browser.tabs.onActivated.addListener(updateActiveTab);
 updateActiveTab();
 
 function notify (msg) {
-  console.log('background got msg', msg);
+  console.log('[cancorder][background] received message', msg);
   if (msg.source !== 'cancorder') {
     return;
   }
+  if (msg.request === 'setup') {
+    updateIcon(ICON_BLUE);
+    browser.browserAction.enable();
+  } else {
+    browser.browserAction.disable();
+  }
   if (msg.recorderState === 'recording') {
     updateIcon(ICON_RED);
-  } else {
+  } else if (msg.recorderState) {
     updateIcon(ICON_GREEN);
   }
 }

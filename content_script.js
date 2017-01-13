@@ -5,8 +5,7 @@ var MEDIARECORDER_CONTENT_TYPES = [
   'video/webm',
   'video/webm;codecs=vp8',
   'audio/webm',
-  'video/mp4;codecs=h264',
-  'video/invalid'
+  'video/mp4;codecs=h264'
 ];
 var NUMERIC_KEY_CHAR_CODES = {
   161: 1,
@@ -19,6 +18,8 @@ var NUMERIC_KEY_CHAR_CODES = {
   8226: 8,
   170: 9
 };
+var VIDEO_CONTENT_TYPE = 'video/webm';
+var VIDEO_EXTENSION = '.webm';
 
 var filenamesGenerated = {};
 var framerate;
@@ -50,12 +51,16 @@ var getSelector = function (el) {
   return elSelector;
 };
 
-var getCanvasNames = function () {
-  var canvases = document.querySelectorAll('canvas');
+var getElementsWithSelectors = function (selector) {
+  var canvases = document.querySelectorAll(selector);
   var displaySelectors = canvases.length > 1;
   return Array.prototype.map.call(canvases, function (canvas) {
     return document.title + (displaySelectors ? ' (' + getSelector(canvas) + ')' : '');
   });
+};
+
+var getCanvasNames = function () {
+  return getElementsWithSelectors('canvas');
 };
 
 var toggleCanvasRecording = function (num) {
@@ -122,52 +127,55 @@ function generateFilename (customFilename) {
   } else {
     filenamesGenerated[filename] = 0;
   }
-  return filename + '.mp4';
+  return filename + VIDEO_EXTENSION;
 }
 
 var record = function (canvas, num) {
-  if (typeof window.MediaRecorder === 'undefined') {
-    console.error('[cancorder] Browser support for MediaRecorder is required');
-  } else {
-    MEDIARECORDER_CONTENT_TYPES.forEach(contentType => {
-      console.info('%s is %ssupported',
-        contentType,
-        (!MediaRecorder.isTypeSupported(contentType) ? 'NOT ' : ''));
-    });
-  }
-
   recordingCanvasNumber = parseInt(num, 10);
   framerate = parseInt(framerate, 10) || 15;
 
   var canvasWidth = canvas.width;
   var canvasHeight = canvas.height;
 
-  console.log('Ready to record %s #%s', getSelector(canvas), num);
-
   var video = document.getElementById(CANCORDER_VIDEO_ID);
+
+  if (typeof window.MediaRecorder === 'undefined') {
+    if (!video) {
+      console.error('[cancorder] Browser support for MediaRecorder is required');
+    }
+    return;
+  }
+
+  console.log('Ready to record %s (source #%s)', getSelector(canvas), num);
 
   if (video) {
     video.pause();
-    // video.src = '';
+    video.style.cssText = 'opacity: 0; visibility: hidden; pointer-events: none';
   } else {
+    var contentTypes = {
+      supported: [],
+      unsupported: []
+    };
+    MEDIARECORDER_CONTENT_TYPES.forEach(contentType => {
+      if (MediaRecorder.isTypeSupported(contentType)) {
+        contentTypes.supported.push(contentType);
+      } else {
+        contentTypes.unsupported.push(contentType);
+      }
+    });
+    console.info('[cancorder] Supported media types: %s', contentTypes.supported.join(', '));
+    console.info('[cancorder] Unsupported media types: %s', contentTypes.unsupported.join(', '));
+    console.info('[cancorder] Using media types: %s', VIDEO_CONTENT_TYPE);
+
     video = document.createElement('video');
     video.id = CANCORDER_VIDEO_ID;
     video.controls = true;
     video.loop = true;
-    // video.download = generateFilename();
-    video.style.cssText = 'position: absolute; bottom: 0; left: 0; height: 30vh; width: 30vw; z-index: 9999';
+    video.style.cssText = 'opacity: 1; visibility: visible; pointer-events: auto; position: absolute; bottom: 0; left: 0; height: 30vh; width: 30vw; z-index: 9999';
     video.addEventListener('dblclick', function () {
       window.location.href = video.src;
     });
     document.body.appendChild(video);
-  }
-
-  if (video.canvas !== canvas) {
-    video.canvas = canvas;
-    if (video.canvas) {
-      canvas.removeEventListener('resize', resizeVideo);
-    }
-    canvas.addEventListener('resize', resizeVideo);
   }
 
   var resizeVideo = function () {
@@ -178,10 +186,18 @@ var record = function (canvas, num) {
     video.height = canvasHeight;
   };
 
+  if (video.canvas !== canvas) {
+    video.canvas = canvas;
+    if (video.canvas) {
+      canvas.removeEventListener('resize', resizeVideo);
+    }
+    canvas.addEventListener('resize', resizeVideo);
+  }
+
   var stream = canvas.captureStream(framerate);
   recorder = new MediaRecorder(stream);
 
-  recorder.addEventListener('start', function () {
+  recorder.addEventListener('start', function (e) {
     isRecording = true;
     isFinished = false;
     notify();
@@ -191,7 +207,7 @@ var record = function (canvas, num) {
     isFinished = true;
     var videoData = [e.data];
     var filename = generateFilename();
-    var blob = new Blob(videoData, {type: 'video/webm'});
+    var blob = new Blob(videoData, {type: VIDEO_CONTENT_TYPE});
     console.log('Video (%s bytes, %s media) ready to save:',
       blob.size, blob.type, filename);
     var videoURL = URL.createObjectURL(blob);
@@ -239,27 +255,40 @@ function msgToolbarPopup () {
   browser.runtime.sendMessage(msg);
 }
 
+window.addEventListener('load', function () {
+  console.log('[cancorder][content_script] load');
+  notify();
+});
+
+window.addEventListener('DOMConentLoaded', function () {
+  console.log('[cancorder][content_script] DOM content loaded');
+  notify();
+});
+
 function notify () {
   msgPageScript();
   msgToolbarPopup();
 }
 
 function handleMessage (msg, sender, sendResponse) {
-  if (msg.state === 'ready') {
+  if (!msg.request) {
+    return;
+  }
+
+  if (msg.request === 'setup') {
     msgToolbarPopup();
-    framerate = parseInt(msg.framerate, 10) || 15;
+    framerate = parseInt(msg.framerate, 10);
     sendResponse({
       source: 'cancorder',
       isRecording: isRecording,
       isFinished: isFinished,
       sources: getCanvasNames()
     });
+    return;
   }
 
-  if (msg.request) {
-    var num = msg.canvasNumber ? parseInt(msg.canvasNumber, 10) : 0;
-    toggleCanvasRecording(num);
-  }
+  var num = msg.canvasNumber ? parseInt(msg.canvasNumber, 10) : 0;
+  toggleCanvasRecording(num);
 }
 
 /**

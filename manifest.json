@@ -4,7 +4,7 @@
   "default_locale": "en",
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "homepage_url": "https://github.com/cvan/capture-visible-tab-video",
+  "homepage_url": "https://github.com/cvan/cancorder",
   "icons": {
     "32": "icons/camcorder-32.png",
     "64": "icons/camcorder-64.png"
@@ -22,7 +22,7 @@
       "64": "icons/camcorder-64.png"
     },
     "default_title": "Cancorder",
-    "default_popup": "popup/capture_visible_tab_video.html"
+    "default_popup": "popup/cancorder.html"
   },
   "background": {
     "scripts": [

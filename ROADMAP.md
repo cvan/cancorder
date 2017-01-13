@@ -5,8 +5,10 @@
 * add inline list of videos
 * store options for selected source and options in browser `storage`
 * support audio streams
+* add `MutationObserver` for new canvases
 
 # Later
+* add context menu for canvases
 * support `getUserMedia` for capturing video stream
 * support `getUserMedia` for capturing audio stream
 * add notifications for when video is done

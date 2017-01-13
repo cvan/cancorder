@@ -10,6 +10,11 @@
         margin: 0;
       }
 
+      fieldset {
+        border-width: 0;
+        margin: 0;
+      }
+
       .panel-section-header label {
         display: block;
         text-align: left;
@@ -99,27 +104,28 @@
       </div>
       <div class="panel-section panel-section-header" id="logs">
       </div>
-      <div class="panel-section-formElements">
-        <div class="panel-formElements-item">
-          <label>
-            <span class="label">Canvas source</span>
-            <select id="source">
-            </select>
-          </label>
-          <label>
-            <span class="label">Framerate (frames/sec)</span>
-            <input id="framerate" type="number" value="15" placeholder="15" step="5" min="5" max="1000">
-          </label>
-        </div>
-      </div>
-
-      <footer class="footer">
-        <div class="panel-section-formElements">
-          <button id="record" class="panel-section-footer-button button-record default">Record</button>
-          <button id="stop" class="panel-section-footer-button button-stop default">Stop</button>
+      <form method="post" action="">
+        <fieldset class="panel-section-formElements">
+          <div class="panel-formElements-item">
+            <label>
+              <span class="label">Canvas source</span>
+              <select id="source">
+              </select>
+            </label>
+            <label>
+              <span class="label">Framerate (frames/sec)</span>
+              <input id="framerate" type="number" value="15" placeholder="15" step="5" min="5" max="1000">
+            </label>
           </div>
-        </div>
-      </footer>
+        </fieldset>
+        <footer class="footer">
+          <div class="panel-section-formElements">
+            <button id="record" class="panel-section-footer-button button-record default">Record</button>
+            <button id="stop" class="panel-section-footer-button button-stop default">Stop</button>
+            </div>
+          </div>
+        </footer>
+      </form>
     </div>
   </body>
 </html>

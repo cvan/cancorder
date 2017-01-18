@@ -1,4 +1,5 @@
 # Soon
+* consider using page action instead of browser action
 * add "stop recording" button near video
 * show live video while being captured
 * hide video when done
@@ -6,8 +7,13 @@
 * store options for selected source and options in browser `storage`
 * support audio streams
 * add `MutationObserver` for new canvases
+* auto-reload background script for local development
+* message from content script to pop-up: sources
 
 # Later
+* add `MediaRecorder` polyfill
+* support Chrome/Chromium
+* submit to addons.mozilla.org
 * add context menu for canvases
 * support `getUserMedia` for capturing video stream
 * support `getUserMedia` for capturing audio stream

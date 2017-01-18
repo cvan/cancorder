@@ -1,3 +1,4 @@
+/* global browser */
 var ICON_GREEN = {
   32: '../icons/camcorder-green-32.png',
   64: '../icons/camcorder-green-64.png'
@@ -10,8 +11,9 @@ var ICON_RED = {
 var activeTab;
 var canvasSourceField = document.querySelector('#source');
 var framerateField = document.querySelector('#framerate');
+var isRecording = false;
 var recordButton = document.querySelector('#record');
-var sources = [];
+var sources = browser.storage.local.get('cancorder:sources');
 var stopButton = document.querySelector('#stop');
 
 var state = {
@@ -20,7 +22,7 @@ var state = {
   framerate: framerateField.value || 15
 };
 
-function getState (data) {
+function setState (data) {
   Object.assign(state, data);
   return state;
 }
@@ -66,9 +68,10 @@ function getActiveTab () {
 }
 
 function msgTab (data) {
-  return getActiveTab().then(tabs => {
+  return getActiveTab().then(function (tabs) {
     activeTab = tabs[0];
-    return browser.tabs.sendMessage(tabs[0].id, getState(data));
+    updateState(data);
+    return browser.tabs.sendMessage(tabs[0].id, state);
   });
 }
 
@@ -109,11 +112,19 @@ var form = document.querySelector('form');
 form.addEventListener('change', function (e) {
   console.log('[cancorder][popup] form changed', e);
   state.canvasNumber = document.querySelector('#source').value;
-  state.framerate = document.querySelector('#framerate').valu;
+  state.framerate = document.querySelector('#framerate').value;
 });
 
 form.addEventListener('submit', function (e) {
   console.log('[cancorder][popup] submitted', e);
   state.canvasNumber = document.querySelector('#source').value;
-  state.framerate = document.querySelector('#framerate').valu;
+  state.framerate = document.querySelector('#framerate').value;
+});
+
+var port = chrome.extension.connect({
+    name: 'Sample Communication'
+});
+port.postMessage('Hi Background');
+port.onMessage.addListener(function (msg) {
+  console.log('message received:', msg);
 });

@@ -255,15 +255,57 @@ function msgToolbarPopup () {
   browser.runtime.sendMessage(msg);
 }
 
-window.addEventListener('load', function () {
-  console.log('[cancorder][content_script] load');
-  notify();
+console.log('[cancorder] load');
+
+var myPort = browser.runtime.connect({name: 'port-from-cs'});
+myPort.postMessage({greeting: 'hello from content script'});
+
+myPort.onMessage.addListener(function (msg) {
+  console.log('In content script, received message from background script:', msg);
 });
 
-window.addEventListener('DOMConentLoaded', function () {
-  console.log('[cancorder][content_script] DOM content loaded');
-  notify();
+document.body.addEventListener('click', function () {
+  myPort.postMessage({greeting: 'they clicked the page!'});
 });
+
+var port = chrome.runtime.connect({name: 'my-channel'});
+port.postMessage({myProperty: 'value'});
+port.onMessage.addListener(function (msg) {
+  console.log('content script got message:', msg);
+});
+
+
+// notify();
+
+// browser.runtime.sendMessage('howdy', function (response) {
+//   console.log('sent howdy message', response);
+//   var ourChannel = response.channel;
+//   window.myTabID = response.id;
+
+//   chrome.runtime.onConnect.addListener(function(port) {
+//     console.log(port.name, ourChannel);
+
+//     // Failing to send this message over the port.
+//     port.postMessage({
+//       type: 'InjectSandboxedScripts',
+//       tabID: window.myTabID
+//     }, function (response) {
+//       console.log('Loading Sandbox-specificSscripts');
+//     });
+//     eventhandlers(port);
+//   });
+// });
+
+// window.postMessage('hello', '*');
+
+// browser.runtime.onConnect.addListener(function (port) {
+//   console.log('on connect', port);
+// });
+
+// browser.extension.onRequest.addListener(function (request, sender, sendResponse) {
+//   console.log(request);
+//   sendResponse('myresponse');
+// });
 
 function notify () {
   msgPageScript();
